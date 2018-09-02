@@ -384,7 +384,7 @@ byebug
       # if more than one option is provided (or an unsupported option)
       # exchange will REJECT order
 
-      it 'defaults to limit order if none is provided' do
+      it 'defaults to exchange limit order if none is provided' do
         request_headers = generate_new_order_headers
         response = HTTParty.post(@new_order_url,
                                 :headers => request_headers,
@@ -392,12 +392,11 @@ byebug
 
         expect(response.code).to eql 200
         expect(response['options'].length).to eql 1
-        expect(response['options']).to include 'limit'
+        expect(response['options']).to include 'exchange limit'
       end
 
       [
-        'none',
-        'limit',
+        'exchange limit',
         'maker-or-cancel',
         'immediate-or-cancel',
         'auction-only',
