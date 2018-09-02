@@ -7,9 +7,6 @@ GEM
     dotenv (2.5.0)
     faraday (0.15.2)
       multipart-post (>= 1.2, < 3)
-    httparty (0.16.2)
-      multi_xml (>= 0.5.2)
-    multi_xml (0.6.0)
     multipart-post (2.0.0)
     openssl (2.1.1)
     rspec (3.8.0)
@@ -34,7 +31,6 @@ DEPENDENCIES
   byebug
   dotenv
   faraday
-  httparty
   openssl
   rspec
 
