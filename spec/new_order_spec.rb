@@ -2,7 +2,7 @@ require 'dotenv/load'
 require 'HTTParty'
 require 'Base64'
 require 'openssl'
-require 'byebug'
+require ''
 require 'awesome_print'
 require 'json'
 
@@ -61,7 +61,7 @@ describe 'New Order Endpoint' do
       payload = generate_new_order_payload
       encoded_payload = Base64.strict_encode64(payload.to_json)
     end
-byebug
+
     {
       'Content-Type': "text/plain",
       'Content-Length': "0",
@@ -78,10 +78,9 @@ byebug
 
       it 'should accept a POST request with base64-encoded payload in header' do
         request_headers = generate_new_order_headers
-        byebug
         response = HTTParty.post(@new_order_url,
                                 :headers => request_headers)
-      byebug
+
         expect(response.code).to eql 200
       end
 
