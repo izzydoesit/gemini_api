@@ -1,5 +1,12 @@
 # Gemfile
-source "http://rubygems.org"
+source 'http://rubygems.org'
 
-gem "rspec"
-gem "httparty"
+ruby '2.3.1'
+
+gem 'rspec'
+gem 'openssl'
+gem 'httparty'
+gem 'faraday'
+gem 'byebug'
+gem 'awesome_print'
+gem 'dotenv'
