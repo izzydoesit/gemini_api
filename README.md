@@ -13,6 +13,7 @@ Our goal is to ensure that all positive use cases are validated so the endpoint 
 - Branch will be load-tested separately
 - Security will be testing the branch separately after functional testing
 - UI testing will happen in conjunction with UI feature changes on separate branch
+- Require Heartbeat functionality has been tested separately
 
 ## Testing Plan
 
@@ -72,7 +73,7 @@ rspec
 
 * [RSpec](http://rspec.info) - Ruby Testing Framework
 * [OpenSSL](https://www.openssl.org/) - Toolkit for Transport Layer Security (TLS) & Secure Sockets Layer (SSL) protocols
-* [Faraday](https://faraday.com) - HTTP REST client
+* [Faraday](https://github.com/lostisland/faraday) - HTTP client library
 * [Byebug](https://github.com/deivid-rodriguez/byebug) - Debugging tool for Ruby
 * [Awesome Print](https://www.github.com/awesome-print/awesome_print) - Formatted printing of Ruby objects with style
 * [DotENV](https://github.com/bkeepers/dotenv) - Shim to load environment variables in development
