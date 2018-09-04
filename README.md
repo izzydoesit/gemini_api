@@ -35,6 +35,16 @@ Our goal is to ensure that all positive use cases are validated so the endpoint 
 - Authentication
   The __who__ of this endpoint. Here we test access based on roles, asserting who has the ability to send requests to this endpoint and who doesn't. We want to make sure we get the right error code response, where user is **FORBIDDEN** from using endpoint upon authentication.
 
+## Bug Report
+
+- Accepts GET request and returns 404 NOT FOUND => Should return 405 NOT ALLOWED
+- Nonce field is not checked for incrementation, only for difference => should check if nonce is greater than previous nonces in session
+
+```
+Finished in 13.86 seconds (files took 0.15542 seconds to load)
+50 examples, 0 failures, 2 pending
+```
+
 ## Getting Started
 
 These instructions will get the included tests up and running on your local machine.
