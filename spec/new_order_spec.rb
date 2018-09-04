@@ -11,7 +11,7 @@ describe 'New Order Endpoint' do
   before(:all) do
     @base_url = 'https://api.sandbox.gemini.com'
     @new_order_url = "#{@base_url}/v1/order/new"
-    @gemini_api = Faraday.new(url: @base_url) do |faraday|
+    @gemini_client = Faraday.new(url: @base_url) do |faraday|
       # faraday.response :logger
       faraday.adapter Faraday.default_adapter
     end
@@ -44,9 +44,9 @@ describe 'New Order Endpoint' do
       "nonce": new_nonce,
       "client_order_id": rand(10**10).to_s,
       "symbol": 'btcusd',
-      "amount": "0.00003",
+      "amount": "0.003",
       "price": "622.13",
-      "side": [ "buy", "sell"].sample,
+      "side": "buy",
       "type": "exchange limit",
     }
   end
@@ -83,7 +83,7 @@ describe 'New Order Endpoint' do
   describe 'Methods' do
 
     it 'should GET symbols' do
-      response = @gemini_api.get("/v1/pubticker/btcusd")
+      response = @gemini_client.get("/v1/pubticker/btcusd")
 
       expect(response.status).to eql 200
     end
@@ -92,7 +92,7 @@ describe 'New Order Endpoint' do
 
       it 'should accept a POST request with base64-encoded payload in header' do
         request_headers = generate_new_order_headers
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url,
           req.headers = request_headers
         end
@@ -103,38 +103,41 @@ describe 'New Order Endpoint' do
       it 'should not accept a POST request with plain text payload in header' do
         payload = generate_new_order_payload
         request_headers = generate_new_order_headers(payload.to_json)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
 
-        expect(response.status).to eql 400 # BAD REQUEST
+        expect(response.status).to eql 400
+        expect(response.reason_phrase).to match /bad request/i
       end
 
-      xit 'should not accept a POST request with encoded payload in body of request' do
+      it 'should not accept a POST request with encoded payload in body of request' do
         payload = generate_new_order_payload
         encoded_payload = Base64.strict_encode64(payload.to_json)
-        request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        request_headers = generate_new_order_headers('')
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
           req.body = encoded_payload
         end
 
         expect(response.status).to eql 400
+        expect(response.reason_phrase).to match /bad request/i
       end
     end
 
     context 'GET method' do
 
-      it 'should not accept a GET request method' do
+      xit 'should not accept a GET request method' do
         request_headers = generate_new_order_headers
-        response = @gemini_api.get do |req|
+        response = @gemini_client.get do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
 
-        expect(response.status).to eql 404 # NOT FOUND
+        expect(response.status).to eql 405
+        expect(response.reason_phrase).to match /bad request/i
       end
     end
 
@@ -144,25 +147,27 @@ describe 'New Order Endpoint' do
         payload = generate_new_order_payload
         encoded_payload = Base64.strict_encode64(payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.put do |req|
+        response = @gemini_client.put do |req|
           req.url @new_order_url
           req.headers = request_headers
           req.body = encoded_payload
         end
 
-        expect(response.status).to eql 405 # METHOD NOT ALLOWED
+        expect(response.status).to eql 405
+        expect(response.reason_phrase).to match /not allowed/i
       end
     end
 
     context 'DELETE method' do
       it 'should not accept a DELETE request method' do
         request_headers = generate_new_order_headers
-        response = @gemini_api.delete do |req|
+        response = @gemini_client.delete do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
 
-        expect(response.status).to eql 405 # METHOD NOT ALLOWED
+        expect(response.status).to eql 405
+        expect(response.reason_phrase).to match /not allowed/i
       end
     end
   end
@@ -173,7 +178,7 @@ describe 'New Order Endpoint' do
       payload = generate_new_order_payload
       payload[:'options'] = ['maker-or-cancel']
       request_headers = generate_new_order_headers(Base64.strict_encode64(payload.to_json))
-      response = @gemini_api.post do |req|
+      response = @gemini_client.post do |req|
         req.url @new_order_url
         req.headers = request_headers
       end
@@ -243,12 +248,13 @@ describe 'New Order Endpoint' do
         payload.delete(required_field)
         encoded_payload = Base64.strict_encode64(payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
 
         expect(response.status).to eql 400
+        expect(response.reason_phrase).to match /bad request/i
       end
     end
 
@@ -260,7 +266,7 @@ describe 'New Order Endpoint' do
         payload.delete(optional_field)
         encoded_payload = Base64.strict_encode64(payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
@@ -275,7 +281,7 @@ describe 'New Order Endpoint' do
         first_payload = generate_new_order_payload
         encoded_payload = Base64.strict_encode64(first_payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
@@ -286,7 +292,7 @@ describe 'New Order Endpoint' do
         second_payload[:'nonce'] = first_payload[:'nonce']
         encoded_payload = Base64.strict_encode64(second_payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
@@ -295,13 +301,14 @@ describe 'New Order Endpoint' do
         expect(response.status).to eql 400
         expect(data['result']).to match /error/i
         expect(data['reason']).to match /InvalidNonce/i
+        expect(data['message']).to match /Nonce \'\d+\' has not increased since your last call/i
       end
 
       xit 'should increment with every request' do
         first_payload = generate_new_order_payload
         encoded_payload = Base64.strict_encode64(first_payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        first_response = @gemini_api.post do |req|
+        first_response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
@@ -309,10 +316,10 @@ describe 'New Order Endpoint' do
         expect(first_response.status).to eql 200
 
         second_payload = generate_new_order_payload
-        second_payload[:'nonce'] = (first_payload[:'nonce'].to_i - 50).to_s
+        second_payload[:nonce] = (first_payload[:nonce].to_i - 50).to_s
         encoded_payload = Base64.strict_encode64(second_payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        second_response = @gemini_api.post do |req|
+        second_response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
@@ -328,7 +335,7 @@ describe 'New Order Endpoint' do
         payload[:client_order_id] = rand(100**100).to_s[0..99]
         encoded_payload = Base64.strict_encode64(payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
@@ -341,7 +348,7 @@ describe 'New Order Endpoint' do
         payload['client_order_id'] = rand(100**100).to_s[0..100]
         encoded_payload = Base64.strict_encode64(payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
@@ -369,7 +376,7 @@ describe 'New Order Endpoint' do
           payload['symbol'] = valid_symbol
           encoded_payload = Base64.strict_encode64(payload.to_json)
           request_headers = generate_new_order_headers(encoded_payload)
-          response = @gemini_api.post do |req|
+          response = @gemini_client.post do |req|
             req.url @new_order_url
             req.headers = request_headers
           end
@@ -385,13 +392,13 @@ describe 'New Order Endpoint' do
         payload[:symbol] = 'neousd'
         encoded_payload = Base64.strict_encode64(payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
         data = JSON.parse response.body
 
-        expect(response.status).to eql 400 # BAD REQUEST
+        expect(response.status).to eql 400
         expect(data['result']).to match /error/i
         expect(data['reason']).to match /InvalidSymbol/i
         expect(data['message']).to match /received bad symbol/i
@@ -407,32 +414,33 @@ describe 'New Order Endpoint' do
         },
         {
           symbol: 'ethusd',
-          minimum: '0.0001'
+          minimum: '0.001'
         },
         {
           symbol: 'ethbtc',
-          minimum: '0.0001'
+          minimum: '0.001'
         },
         {
           symbol: 'zecusd',
-          minimum: '0.0001'
+          minimum: '0.001'
         },
         {
           symbol: 'zecbtc',
-          minimum: '0.0001'
+          minimum: '0.001'
         },
         {
           symbol: 'zeceth',
-          minimum: '0.0001'
+          minimum: '0.001'
         }
       ].each do |currency|
 
         it "should accept minimum amount for #{currency[:symbol]}" do
           payload = generate_new_order_payload
+          payload[:symbol] = currency[:symbol]
           payload[:'amount'] = currency[:minimum]
           encoded_payload = Base64.strict_encode64(payload.to_json)
           request_headers = generate_new_order_headers(encoded_payload)
-          response = @gemini_api.post do |req|
+          response = @gemini_client.post do |req|
             req.url @new_order_url
             req.headers = request_headers
           end
@@ -444,16 +452,17 @@ describe 'New Order Endpoint' do
 
         it "should reject amount below minimum for #{currency[:symbol]}" do
           payload = generate_new_order_payload
+          payload[:symbol] = currency[:symbol]
           payload[:'amount'] = (currency[:minimum].to_f - currency[:minimum].to_f/10).to_s
           encoded_payload = Base64.strict_encode64(payload.to_json)
           request_headers = generate_new_order_headers(encoded_payload)
-          response = @gemini_api.post do |req|
+          response = @gemini_client.post do |req|
             req.url @new_order_url
             req.headers = request_headers
           end
           data = JSON.parse response.body
 
-          expect(response.status).to eql 400 # BAD REQUEST
+          expect(response.status).to eql 400
           expect(data['result']).to match /error/i
           expect(data['reason']).to match /InvalidQuantity/i
           expect(data['message']).to match /Invalid quantity for symbol/i
@@ -468,7 +477,7 @@ describe 'New Order Endpoint' do
         payload[:type] = 'exchange limit'
         encoded_payload = Base64.strict_encode64(payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
@@ -483,13 +492,13 @@ describe 'New Order Endpoint' do
         payload[:type] = 'good-until-cancelled'
         encoded_payload = Base64.strict_encode64(payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
         data = JSON.parse response.body
 
-        expect(response.status).to eql 400 # BAD REQUEST
+        expect(response.status).to eql 400
         expect(data['result']).to match /error/i
         expect(data['reason']).to match /InvalidOrderType/i
         expect(data['message']).to match /Invalid order type for symbol/i
@@ -503,7 +512,7 @@ describe 'New Order Endpoint' do
 
       it 'defaults to exchange limit order if none is provided' do
         request_headers = generate_new_order_headers
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
@@ -523,9 +532,11 @@ describe 'New Order Endpoint' do
         it "accepts valid order execution option: #{order_option}" do
           payload = generate_new_order_payload
           payload['options'] = [order_option]
+          # MINIMUM for 'indication-of-interest' order option
+          payload[:amount] = '10' if order_option == 'indication-of-interest'
           encoded_payload = Base64.strict_encode64(payload.to_json)
           request_headers = generate_new_order_headers(encoded_payload)
-          response = @gemini_api.post do |req|
+          response = @gemini_client.post do |req|
             req.url @new_order_url
             req.headers = request_headers
           end
@@ -542,13 +553,13 @@ describe 'New Order Endpoint' do
         payload['options'] = ['auction-only', 'maker-or-cancel']
         encoded_payload = Base64.strict_encode64(payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
         data = JSON.parse response.body
 
-        expect(response.status).to eql 400 # BAD REQUEST
+        expect(response.status).to eql 400
         expect(data['result']).to match /error/i
         expect(data['reason']).to match /ConflictingOptions/i
         expect(data['message']).to match /A single order supports at most one of these options/i
@@ -559,13 +570,13 @@ describe 'New Order Endpoint' do
         payload[:options] = ['good-until-cancelled']
         encoded_payload = Base64.strict_encode64(payload.to_json)
         request_headers = generate_new_order_headers(encoded_payload)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
         data = JSON.parse response.body
 
-        expect(response.status).to eql 400 # BAD REQUEST
+        expect(response.status).to eql 400
         expect(data['result']).to match /error/i
         expect(data['reason']).to match /UnsupportedOption/i
         expect(data['message']).to match /Option \"#{payload[:options].first}\" is not supported/i
@@ -575,9 +586,9 @@ describe 'New Order Endpoint' do
 
   describe 'Authorization' do
 
-    it 'should allow trader access' do
+    it 'should allow trader role access' do
       request_headers = generate_new_order_headers
-      response = @gemini_api.post do |req|
+      response = @gemini_client.post do |req|
         req.url @new_order_url
         req.headers = request_headers
       end
@@ -590,13 +601,13 @@ describe 'New Order Endpoint' do
       [ 'fund-manager', 'auditor' ].each do |role|
         role_key, role_secret = generate_role_key(role)
         request_headers = generate_new_order_headers(nil, role_key)
-        response = @gemini_api.post do |req|
+        response = @gemini_client.post do |req|
           req.url @new_order_url
           req.headers = request_headers
         end
         data = JSON.parse response.body
 
-        expect(response.status).to eql 400 # BAD REQUEST
+        expect(response.status).to eql 400
         expect(data['result']).to match /error/i
         expect(data['reason']).to match /InvalidSignature/i
         expect(data['message']).to match /InvalidSignature/i
