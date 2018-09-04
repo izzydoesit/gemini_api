@@ -55,6 +55,16 @@ These instructions will get the included tests up and running on your local mach
 ruby 2.3.1
 bundler 1.12.5
 ```
+NOTE: You will also need to create a file in root directory titled `.env` and add the following entries:
+```
+SANDBOX_TRADER_API_KEY=<your trader key>
+SANDBOX_TRADER_API_SECRET=<your trader secret>
+FUND_MGR_API_KEY=<your manager key>
+FUND_MGR_API_SECRET=<your manager secret>
+AUDITOR_API_KEY=<your auditor key>
+AUDITOR_API_SECRET=<your auditor secret>
+```
+Please replace values in <> with your own keys.
 
 ### Installing
 From the command terminal, clone the repository to your local directory...
